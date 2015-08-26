@@ -98,7 +98,7 @@ else
     echo -e "\n\nModifying partition table to make room for Ubuntu."
     echo -e "Your Chromebook will reboot, wipe your data and then"
     echo -e "you should re-run this script..."
-    umount -f /mnt/stateful_partition
+    umount -l /mnt/stateful_partition
 
     # stateful first
     cgpt add -i 1 -b $stateful_start -s $stateful_size -l STATE ${target_disk}
