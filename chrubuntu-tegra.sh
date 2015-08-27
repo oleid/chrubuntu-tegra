@@ -2060,7 +2060,43 @@ chmod a+x /tmp/urfs/install-tegra.sh
 chroot /tmp/urfs /bin/bash -c /install-tegra.sh
 rm /tmp/urfs/install-tegra.sh
 
-echo "console=tty1 debug verbose root=${target_rootfs} rootwait rw lsm.module_locking=0" > kernel-config
+# Install CUDA toolkit
+cat > /tmp/urfs/install-cuda.sh <<EOF
+wget http://developer.download.nvidia.com/embedded/L4T/r21_Release_v3.0/cuda-repo-l4t-r21.3-6-5-prod_6.5-42_armhf.deb
+dpkg -i cuda-repo-l4t-r21.3-6-5-prod_6.5-42_armhf.deb
+apt-get update
+apt-get install -y cuda-toolkit-6-5
+usermod -a -G video $USER 
+echo "# Add CUDA bin & library paths:" >> ~/.bashrc
+echo "export PATH=/usr/local/cuda/bin:$PATH" >> ~/.bashrc
+echo "export LD_LIBRARY_PATH=/usr/local/cuda/lib:$LD_LIBRARY_PATH" >> ~/.bashrc
+source ~/.bashrc
+cuda-install-samples-6.5.sh /home/user
+EOF
+
+chmod a+x /tmp/urfs/install-cuda.sh
+chroot /tmp/urfs /bin/bash -c /install-cuda.sh
+rm /tmp/urfs/install-cuda.sh
+
+# Install extra software
+cat > /tmp/urfs/install-extra.sh <<EOF
+apt-get install -y mc ntp git
+EOF
+
+chmod a+x /tmp/urfs/install-extra.sh
+chroot /tmp/urfs /bin/bash -c /install-extra.sh
+rm /tmp/urfs/install-extra.sh
+
+# Intall autoamtic NTP for time service
+
+# Install branded wallpaper
+
+# Make 12pt default system fonts
+
+# Bind PgUp/PgDown, Home and End to alt-arrows
+
+#echo "console=tty1 debug verbose root=${target_rootfs} rootwait rw lsm.module_locking=0" > kernel-config
+echo "console=tty1 root=${target_rootfs} rootwait rw lsm.module_locking=0" > kernel-config
 vbutil_arch="x86"
 if [ $ubuntu_arch = "armhf" ]
 then
