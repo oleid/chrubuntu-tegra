@@ -151,7 +151,7 @@ then
   ubuntu_arch="armhf"
   if [ "$ubuntu_metapackage" = "default" ]
   then
-    ubuntu_metapackage="xubuntu-desktop"
+    ubuntu_metapackage="ubuntu-desktop"
   fi
 else
   echo -e "Error: This script doesn't know how to install ChrUbuntu on $chromebook_arch"
@@ -2092,6 +2092,8 @@ rm /tmp/urfs/install-extra.sh
 # Install branded wallpaper
 
 # Make 12pt default system fonts
+
+# Install EN-DE language switch by Shift-Shift  
 
 # Bind PgUp/PgDown, Home and End to alt-arrows
 
