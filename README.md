@@ -16,14 +16,14 @@ sudo chromeos-firmwareupdate --mode=todev
 
 ```
 wget https://goo.gl/i6ZjBV chrubuntu-tegra.sh
-sudo bash ./chrubuntu-tegra.sh
+sudo bash ./chrubuntu-tegra.sh default lts
 ```
 
 4. Redownload and re-run Chrubuntu instllation script after reboot
 
 ```
 wget https://goo.gl/i6ZjBV chrubuntu-tegra.sh
-sudo bash ./chrubuntu-tegra.sh
+sudo bash ./chrubuntu-tegra.sh default lts
 ```
 
 5. After successfully entering Chrubuntu, reboot into ChromeOS and set Chrubuntu as permanent primary boot option:
