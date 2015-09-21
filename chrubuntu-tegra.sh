@@ -274,9 +274,9 @@ echo user | echo user:user | chpasswd
 adduser user adm
 adduser user sudo
 update-alternatives --set x-www-browser /usr/bin/chromium-browser
-locale-gen en_US en_US.UTF-8
-echo -e 'LANG=en_US.UTF-8\nLC_ALL=en_US.UTF-8' > /etc/default/locale
-LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 dpkg-reconfigure locales" > /tmp/urfs/install-ubuntu.sh
+locale-gen de_DE de_DE.UTF-8
+echo -e 'LANG=de_DE.UTF-8\nLC_ALL=de_DE.UTF-8' > /etc/default/locale
+LANG=de_DE.UTF-8 LC_ALL=de_DE.UTF-8 dpkg-reconfigure locales" > /tmp/urfs/install-ubuntu.sh
 
 chmod a+x /tmp/urfs/install-ubuntu.sh
 chroot /tmp/urfs /bin/bash -c /install-ubuntu.sh
