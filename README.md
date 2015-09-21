@@ -6,11 +6,25 @@ Based on work of arm000 found [here](http://www.reddit.com/r/chrubuntu/comments/
 
 1. Turn chromebook into developer mode:
 
-2. Switch to developer terminal
+```
+sudo chromeos-firmwareupdate --mode=todev
+```
+
+2. Switch to developer terminal by pressing "Alt + Left Arrow", login as `chronos`
 
 3. Download and execute the Chrubuntu installation script
 
+```
+wget https://goo.gl/i6ZjBV
+sudo sh chrubuntu-tegra.sh
+```
+
 4. Redownload and re-run Chrubuntu instllation script after reboot
+
+```
+wget https://goo.gl/i6ZjBV
+sudo sh chrubuntu-tegra.sh
+```
 
 5. After successfully entering Chrubuntu, reboot into ChromeOS and set Chrubuntu as permanent primary boot option:
 
