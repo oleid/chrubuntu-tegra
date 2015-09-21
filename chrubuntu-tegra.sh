@@ -6,6 +6,8 @@ set -e
 #   2. Then download this script to a /tmp folder and from there run: 
 #      sudo bash chrubuntu-tegra.sh default 14.04 /dev/mmcblk1
 
+rootdir=`pwd`
+
 # fw_type will always be developer for Mario.
 # Alex and ZGB need the developer BIOS installed though.
 fw_type="`crossystem mainfw_type`"
@@ -314,7 +316,7 @@ rm /tmp/urfs/install-flash.sh
 cp /etc/X11/xorg.conf.d/tegra.conf /tmp/urfs/usr/share/X11/xorg.conf.d/
 l4tdir=`mktemp -d`
 l4t=Tegra124_Linux_R21.4.0_armhf.tbz2
-cp ./dist/${l4t} ${l4tdir}/
+cp ${rootdir}/${l4t} ${l4tdir}/
 cd ${l4tdir}
 tar xvpf ${l4t}
 cd Linux_for_Tegra/rootfs/
@@ -2061,7 +2063,7 @@ chroot /tmp/urfs /bin/bash -c /install-tegra.sh
 rm /tmp/urfs/install-tegra.sh
 
 # Install CUDA toolkit
-cp ./dist/cuda-repo-l4t-r21.3-6-5-prod_6.5-42_armhf.deb /tmp/urfs/
+cp ${rootdir}/cuda-repo-l4t-r21.3-6-5-prod_6.5-42_armhf.deb /tmp/urfs/
 cat > /tmp/urfs/install-cuda.sh <<EOF
 dpkg -i cuda-repo-l4t-r21.3-6-5-prod_6.5-42_armhf.deb
 apt-get update
