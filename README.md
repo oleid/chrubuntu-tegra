@@ -18,6 +18,17 @@ Based on work of arm000 found [here](http://www.reddit.com/r/chrubuntu/comments/
 sudo cgpt add -i 6 -P 5 -S 1
 ```
 
-To switch back the primary boot option to ChromeOS:
+To switch back the primary boot option to ChromeOS while in ChrUbuntu:
 
+```
+sudo apt-get install cgpt
+sudo cgpt add -i 6 -P 0 -S 1 /dev/mmcblk0
+```
+
+In many other guides the device name is `/dev/sda`, however it's only valid if booted into Chrome OS. ChrUbuntu's device name (`mmcblk0` in our case) may be different and could be figured out from `gparted` output:
+
+```
+sudo apt-get install gparted
+gparted
+```
 
