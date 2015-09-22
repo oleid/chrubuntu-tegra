@@ -2079,7 +2079,7 @@ echo "# Add CUDA bin & library paths:" >> ~/.bashrc
 echo "export PATH=/usr/local/cuda/bin:$PATH" >> ~/.bashrc
 echo "export LD_LIBRARY_PATH=/usr/local/cuda/lib:$LD_LIBRARY_PATH" >> ~/.bashrc
 source ~/.bashrc
-cuda-install-samples-6.5.sh /home/user
+sh /usr/local/cuda/bin/cuda-install-samples-6.5.sh /home/user
 EOF
 
 chmod a+x /tmp/urfs/install-cuda.sh
