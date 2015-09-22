@@ -316,7 +316,7 @@ rm /tmp/urfs/install-flash.sh
 cp /etc/X11/xorg.conf.d/tegra.conf /tmp/urfs/usr/share/X11/xorg.conf.d/
 l4tdir=`mktemp -d`
 l4t=Tegra124_Linux_R21.4.0_armhf.tbz2
-cp ${rootdir}/${l4t} ${l4tdir}/
+cp ${rootdir}/dist/${l4t} ${l4tdir}/
 cd ${l4tdir}
 tar xvpf ${l4t}
 cd Linux_for_Tegra/rootfs/
@@ -2063,7 +2063,7 @@ chroot /tmp/urfs /bin/bash -c /install-tegra.sh
 rm /tmp/urfs/install-tegra.sh
 
 # Install CUDA toolkit
-cp ${rootdir}/cuda-repo-l4t-r21.3-6-5-prod_6.5-42_armhf.deb /tmp/urfs/
+cp ${rootdir}/dist/cuda-repo-l4t-r21.3-6-5-prod_6.5-42_armhf.deb /tmp/urfs/
 cat > /tmp/urfs/install-cuda.sh <<EOF
 dpkg -i cuda-repo-l4t-r21.3-6-5-prod_6.5-42_armhf.deb
 apt-get update
