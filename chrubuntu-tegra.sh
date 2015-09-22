@@ -206,13 +206,18 @@ if [ $ubuntu_version = "dev" ]
 then
   ubuntu_animal=`wget --quiet -O - http://changelogs.ubuntu.com/meta-release-development | grep "^Dist: " | tail -1 | sed -r 's/^Dist: (.*)$/\1/'`
   tar_file="http://cdimage.ubuntu.com/ubuntu-core/daily/current/$ubuntu_animal-core-$ubuntu_arch.tar.gz"
+else
+  if [ -f "${rootdir}/dist/ubuntu-core-$ubuntu_version-core-$ubuntu_arch.tar.gz" ]
+  then
+    tar_file="${rootdir}/dist/ubuntu-core-$ubuntu_version-core-$ubuntu_arch.tar.gz"
+  fi
 fi
 
-if [ ! -f ${rootdir}/dist/${tar_file} ]
+if [ -f ${tar_file} ]
 then
-  wget -O - $tar_file | tar xzvvp -C /tmp/urfs/
+  tar xzvvp -C /tmp/urfs/ ${tar_file}
 else
-  tar xzvvp -C /tmp/urfs/ ${rootdir}/dist/${tar_file}
+  wget -O - ${tar_file} | tar xzvvp -C /tmp/urfs/
 fi
 
 mount -o bind /proc /tmp/urfs/proc
