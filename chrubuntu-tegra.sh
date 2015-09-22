@@ -215,7 +215,7 @@ fi
 
 if [ -f ${tar_file} ]
 then
-  tar xzvvp -C /tmp/urfs/ ${tar_file}
+  tar xzvvpf -C /tmp/urfs/ ${tar_file}
 else
   wget -O - ${tar_file} | tar xzvvp -C /tmp/urfs/
 fi
