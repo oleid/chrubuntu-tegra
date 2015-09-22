@@ -207,7 +207,13 @@ then
   ubuntu_animal=`wget --quiet -O - http://changelogs.ubuntu.com/meta-release-development | grep "^Dist: " | tail -1 | sed -r 's/^Dist: (.*)$/\1/'`
   tar_file="http://cdimage.ubuntu.com/ubuntu-core/daily/current/$ubuntu_animal-core-$ubuntu_arch.tar.gz"
 fi
-wget -O - $tar_file | tar xzvvp -C /tmp/urfs/
+
+if [ ! -f ${rootdir}/dist/${tar_file} ]
+then
+  wget -O - $tar_file | tar xzvvp -C /tmp/urfs/
+else
+  tar xzvvp -C /tmp/urfs/ ${rootdir}/dist/${tar_file}
+fi
 
 mount -o bind /proc /tmp/urfs/proc
 mount -o bind /dev /tmp/urfs/dev
