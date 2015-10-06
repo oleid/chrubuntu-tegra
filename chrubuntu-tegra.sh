@@ -329,7 +329,12 @@ mkdir -p /tmp/urfs/usr/share/X11/xorg.conf.d
 cp /etc/X11/xorg.conf.d/tegra.conf /tmp/urfs/usr/share/X11/xorg.conf.d/
 l4tdir=`mktemp -d`
 l4t=Tegra124_Linux_R21.4.0_armhf.tbz2
+
+# download if needed
+mkdir -p ${rootdir}/dist
+[ -f ${rootdir}/dist/${l4t} ] || wget -P ${l4tdir} http://developer.download.nvidia.com/embedded/L4T/r21_Release_v4.0/${l4t} -O ${rootdir}/dist/${l4t}
 cp ${rootdir}/dist/${l4t} ${l4tdir}/
+
 cd ${l4tdir}
 tar xvpf ${l4t}
 cd Linux_for_Tegra/rootfs/
@@ -2075,10 +2080,13 @@ chmod a+x /tmp/urfs/install-tegra.sh
 chroot /tmp/urfs /bin/bash -c /install-tegra.sh
 rm /tmp/urfs/install-tegra.sh
 
-# Install CUDA toolkit
-cp ${rootdir}/dist/cuda-repo-l4t-r21.3-6-5-prod_6.5-42_armhf.deb /tmp/urfs/
+# Install CUDA toolkit, download if needed
+cuda_repo=cuda-repo-l4t-r21.3-6-5-prod_6.5-42_armhf.deb
+[ -f ${rootdir}/dist/$cuda_repo ] || wget http://developer.download.nvidia.com/embedded/L4T/r21_Release_v3.0/$cuda_repo -O ${rootdir}/dist/$cuda_repo
+cp ${rootdir}/dist/$cuda_repo /tmp/urfs/
+
 cat > /tmp/urfs/install-cuda.sh <<EOF
-dpkg -i cuda-repo-l4t-r21.3-6-5-prod_6.5-42_armhf.deb
+dpkg -i $cuda_repo
 apt-get update
 apt-get install -y cuda-toolkit-6-5
 usermod -a -G video $USER 
