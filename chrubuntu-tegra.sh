@@ -309,6 +309,7 @@ cp -ar /lib/firmware/* /tmp/urfs/lib/firmware/
 cp /opt/google/chrome/pepper/libpepflashplayer.so /tmp/urfs/usr/lib/chromium-browser
 
 # tell chromium-browser where to find flash plugin
+mkdir -p /tmp/urfs/etc/chromium-browser
 echo -e 'CHROMIUM_FLAGS="${CHROMIUM_FLAGS} --ppapi-flash-path=/usr/lib/chromium-browser/libpepflashplayer.so"' >> /tmp/urfs/etc/chromium-browser/default
 
 # flash plugin requires a new version of libstdc++6 from test repository
@@ -324,6 +325,7 @@ rm /tmp/urfs/install-flash.sh
 
 
 # BIG specific files here
+mkdir -p /tmp/urfs/usr/share/X11/xorg.conf.d
 cp /etc/X11/xorg.conf.d/tegra.conf /tmp/urfs/usr/share/X11/xorg.conf.d/
 l4tdir=`mktemp -d`
 l4t=Tegra124_Linux_R21.4.0_armhf.tbz2
