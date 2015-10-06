@@ -7,6 +7,8 @@ set -e
 #      sudo bash chrubuntu-tegra.sh default 14.04 /dev/mmcblk1
 
 rootdir=`pwd`
+restart_point=$4
+[ -z "$restart_point" ] && restart_point=0
 
 # fw_type will always be developer for Mario.
 # Alex and ZGB need the developer BIOS installed though.
@@ -31,90 +33,98 @@ fi
 
 setterm -blank 0
 
-if [ "$3" != "" ]; then
-  target_disk=$3
-  echo "Got ${target_disk} as target drive"
-  echo ""
-  echo "WARNING! All data on this device will be wiped out! Continue at your own risk!"
-  echo ""
-  read -p "Press [Enter] to install ChrUbuntu on ${target_disk} or CTRL+C to quit"
-
-  ext_size="`blockdev --getsz ${target_disk}`"
-  arootfs_size=$((ext_size - 65600 - 33 - 4*1024*1024*1024/512))
-#  cgpt create ${target_disk}
-#  cgpt add -i 6 -b 64 -s 32768 -S 1 -P 5 -l KERN-A -t "kernel" ${target_disk}
-#  cgpt add -i 7 -b 65600 -s $aroot_size -l ROOT-A -t "rootfs" ${target_disk}
-  sync
-  blockdev --rereadpt ${target_disk}
-#  partprobe ${target_disk}
-  crossystem dev_boot_usb=1
+# choose target_disk according to argument
+if [ -z "$3" ] ; then
+   target_disk="`rootdev -d -s`"
 else
-  target_disk="`rootdev -d -s`"
-  # Do partitioning (if we haven't already)
-  ckern_size="`cgpt show -i 6 -n -s -q ${target_disk}`"
-  croot_size="`cgpt show -i 7 -n -s -q ${target_disk}`"
-  state_size="`cgpt show -i 1 -n -s -q ${target_disk}`"
-
-  max_ubuntu_size=$(($state_size/1024/1024/2))
-  rec_ubuntu_size=$(($max_ubuntu_size - 1))
-  # If KERN-C and ROOT-C are one, we partition, otherwise assume they're what they need to be...
-  if [ "$ckern_size" =  "1" -o "$croot_size" = "1" ]
-  then
-    while :
-    do
-      read -p "Enter the size in gigabytes you want to reserve for Ubuntu. Acceptable range is 5 to $max_ubuntu_size  but $rec_ubuntu_size is the recommended maximum: " ubuntu_size
-      if [ ! $ubuntu_size -ne 0 2>/dev/null ]
-      then
-        echo -e "\n\nNumbers only please...\n\n"
-        continue
-      fi
-      if [ $ubuntu_size -lt 5 -o $ubuntu_size -gt $max_ubuntu_size ]
-      then
-        echo -e "\n\nThat number is out of range. Enter a number 5 through $max_ubuntu_size\n\n"
-        continue
-      fi
-      break
-    done
-    # We've got our size in GB for ROOT-C so do the math...
-
-    # Calculate sector size for rootc
-    rootc_size=$(($ubuntu_size*1024*1024*2))
-
-    # kernc is always 16mb
-    kernc_size=32768
-
-    # New stateful size with rootc and kernc subtracted from original
-    stateful_size=$(($state_size - $rootc_size - $kernc_size))
-
-    # Start stateful at the same spot it currently starts at
-    stateful_start="`cgpt show -i 1 -n -b -q ${target_disk}`"
-
-    # Start kernc at stateful start plus stateful size
-    kernc_start=$(($stateful_start + $stateful_size))
-
-    # Start rootc at kernc start plus kernc size
-    rootc_start=$(($kernc_start + $kernc_size))
-
-    # Do the real work
-
-    echo -e "\n\nModifying partition table to make room for Ubuntu."
-    echo -e "Your Chromebook will reboot, wipe your data and then"
-    echo -e "you should re-run this script..."
-    umount -l /mnt/stateful_partition
-
-    # stateful first
-    cgpt add -i 1 -b $stateful_start -s $stateful_size -l STATE ${target_disk}
-
-    # now kernc
-    cgpt add -i 6 -b $kernc_start -s $kernc_size -l KERN-C ${target_disk}
-
-    # finally rootc
-    cgpt add -i 7 -b $rootc_start -s $rootc_size -l ROOT-C ${target_disk}
-
-    reboot
-    exit
-  fi
+   target_disk=$3
 fi
+
+if [ "$restart_point" -le 0 ]; then
+    if [ "$3" != "" ]; then      
+      echo "Got ${target_disk} as target drive"
+      echo ""
+      echo "WARNING! All data on this device will be wiped out! Continue at your own risk!"
+      echo ""
+      read -p "Press [Enter] to install ChrUbuntu on ${target_disk} or CTRL+C to quit"
+
+      ext_size="`blockdev --getsz ${target_disk}`"
+      arootfs_size=$((ext_size - 65600 - 33 - 4*1024*1024*1024/512))
+    #  cgpt create ${target_disk}
+    #  cgpt add -i 6 -b 64 -s 32768 -S 1 -P 5 -l KERN-A -t "kernel" ${target_disk}
+    #  cgpt add -i 7 -b 65600 -s $aroot_size -l ROOT-A -t "rootfs" ${target_disk}
+      sync
+      blockdev --rereadpt ${target_disk}
+    #  partprobe ${target_disk}
+      crossystem dev_boot_usb=1
+    else
+      # Do partitioning (if we haven't already)
+      ckern_size="`cgpt show -i 6 -n -s -q ${target_disk}`"
+      croot_size="`cgpt show -i 7 -n -s -q ${target_disk}`"
+      state_size="`cgpt show -i 1 -n -s -q ${target_disk}`"
+
+      max_ubuntu_size=$(($state_size/1024/1024/2))
+      rec_ubuntu_size=$(($max_ubuntu_size - 1))
+      # If KERN-C and ROOT-C are one, we partition, otherwise assume they're what they need to be...
+      if [ "$ckern_size" =  "1" -o "$croot_size" = "1" ]
+      then
+        while :
+        do
+          read -p "Enter the size in gigabytes you want to reserve for Ubuntu. Acceptable range is 5 to $max_ubuntu_size  but $rec_ubuntu_size is the recommended maximum: " ubuntu_size
+          if [ ! $ubuntu_size -ne 0 2>/dev/null ]
+          then
+            echo -e "\n\nNumbers only please...\n\n"
+            continue
+          fi
+          if [ $ubuntu_size -lt 5 -o $ubuntu_size -gt $max_ubuntu_size ]
+          then
+            echo -e "\n\nThat number is out of range. Enter a number 5 through $max_ubuntu_size\n\n"
+            continue
+          fi
+          break
+        done
+        # We've got our size in GB for ROOT-C so do the math...
+
+        # Calculate sector size for rootc
+        rootc_size=$(($ubuntu_size*1024*1024*2))
+
+        # kernc is always 16mb
+        kernc_size=32768
+
+        # New stateful size with rootc and kernc subtracted from original
+        stateful_size=$(($state_size - $rootc_size - $kernc_size))
+
+        # Start stateful at the same spot it currently starts at
+        stateful_start="`cgpt show -i 1 -n -b -q ${target_disk}`"
+
+        # Start kernc at stateful start plus stateful size
+        kernc_start=$(($stateful_start + $stateful_size))
+
+        # Start rootc at kernc start plus kernc size
+        rootc_start=$(($kernc_start + $kernc_size))
+
+        # Do the real work
+
+        echo -e "\n\nModifying partition table to make room for Ubuntu."
+        echo -e "Your Chromebook will reboot, wipe your data and then"
+        echo -e "you should re-run this script..."
+        umount -l /mnt/stateful_partition
+
+        # stateful first
+        cgpt add -i 1 -b $stateful_start -s $stateful_size -l STATE ${target_disk}
+
+        # now kernc
+        cgpt add -i 6 -b $kernc_start -s $kernc_size -l KERN-C ${target_disk}
+
+        # finally rootc
+        cgpt add -i 7 -b $rootc_start -s $rootc_size -l ROOT-C ${target_disk}
+
+        reboot
+        exit
+      fi
+    fi
+fi # restart_point 0
+echo restart point 0 passed
 
 # hwid lets us know if this is a Mario (Cr-48), Alex (Samsung Series 5), ZGB (Acer), etc
 hwid="`crossystem hwid`"
@@ -187,19 +197,23 @@ fi
 
 echo "Target Kernel Partition: $target_kern  Target Root FS: ${target_rootfs}"
 
-if mount|grep ${target_rootfs}
-then
-  echo "Refusing to continue since ${target_rootfs} is formatted and mounted. Try rebooting"
-  exit
-fi
-
-mkfs.ext4 ${target_rootfs}
-
 if [ ! -d /tmp/urfs ]
 then
   mkdir /tmp/urfs
 fi
-mount -t ext4 ${target_rootfs} /tmp/urfs
+
+if [ "$restart_point" -le 1 ]; then
+    if mount|grep ${target_rootfs}
+    then
+      echo "Refusing to continue since ${target_rootfs} is formatted and mounted. Try rebooting"
+      exit
+    fi
+
+    mkfs.ext4 ${target_rootfs}
+fi # restart_point 1
+echo restart point 1 passed
+
+mount|grep ${target_rootfs} ||  mount -t ext4 ${target_rootfs} /tmp/urfs
 
 tar_file="http://cdimage.ubuntu.com/ubuntu-core/releases/$ubuntu_version/release/ubuntu-core-$ubuntu_version-core-$ubuntu_arch.tar.gz"
 if [ $ubuntu_version = "dev" ]
@@ -213,17 +227,20 @@ else
   fi
 fi
 
-if [ -f ${tar_file} ]
-then
-  tar xzvvp -C /tmp/urfs/ -f ${tar_file}
-else
-  wget -O - ${tar_file} | tar xzvvp -C /tmp/urfs/
-fi
+if [ "$restart_point" -le 2 ]; then
+    if [ -f ${tar_file} ]
+    then
+      tar xzvvp -C /tmp/urfs/ -f ${tar_file}
+    else
+      wget -O - ${tar_file} | tar xzvvp -C /tmp/urfs/
+    fi
+fi # restart_point 2
+echo restart point 2 passed
 
-mount -o bind /proc /tmp/urfs/proc
-mount -o bind /dev /tmp/urfs/dev
-mount -o bind /dev/pts /tmp/urfs/dev/pts
-mount -o bind /sys /tmp/urfs/sys
+# only mount if needed
+for i in proc dev dev/pts sys; do
+   mount | grep  /tmp/urfs/$i || mount -o bind /$i /tmp/urfs/$i
+done
 
 if [ -f /usr/bin/old_bins/cgpt ]
 then
@@ -253,20 +270,23 @@ cr_install="wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub |
 add-apt-repository \"deb http://dl.google.com/linux/chrome/deb/ stable main\"
 apt-get update
 apt-get -y install google-chrome-stable"
-if [ $ubuntu_arch = 'armhf' ]
-then
-  cr_install='apt-get -y install chromium-browser'
-fi
 
-add_apt_repository_package='software-properties-common'
-ubuntu_major_version=${ubuntu_version:0:2}
-ubuntu_minor_version=${ubuntu_version:3:2}
-if [ $ubuntu_major_version -le 12 ] && [ $ubuntu_minor_version -lt 10 ]
-then
-  add_apt_repository_package='python-software-properties'
-fi
+if [ "$restart_point" -le 3 ]; then
 
-echo -e "apt-get -y update
+    if [ $ubuntu_arch = 'armhf' ]
+    then
+      cr_install='apt-get -y install chromium-browser'
+    fi
+
+    add_apt_repository_package='software-properties-common'
+    ubuntu_major_version=${ubuntu_version:0:2}
+    ubuntu_minor_version=${ubuntu_version:3:2}
+    if [ $ubuntu_major_version -le 12 ] && [ $ubuntu_minor_version -lt 10 ]
+    then
+      add_apt_repository_package='python-software-properties'
+    fi
+
+    echo -e "apt-get -y update
 apt-get -y dist-upgrade
 apt-get -y install ubuntu-minimal
 apt-get -y install wget
@@ -278,6 +298,7 @@ add-apt-repository multiverse
 apt-get update
 apt-get -y install $ubuntu_metapackage
 $cr_install
+
 if [ -f /usr/lib/lightdm/lightdm-set-defaults ]
 then
   /usr/lib/lightdm/lightdm-set-defaults --autologin user
@@ -291,9 +312,11 @@ locale-gen de_DE de_DE.UTF-8
 echo -e 'LANG=de_DE.UTF-8\nLC_ALL=de_DE.UTF-8' > /etc/default/locale
 LANG=de_DE.UTF-8 LC_ALL=de_DE.UTF-8 dpkg-reconfigure locales" > /tmp/urfs/install-ubuntu.sh
 
-chmod a+x /tmp/urfs/install-ubuntu.sh
-chroot /tmp/urfs /bin/bash -c /install-ubuntu.sh
-rm /tmp/urfs/install-ubuntu.sh
+    chmod a+x /tmp/urfs/install-ubuntu.sh
+    chroot /tmp/urfs /bin/bash -c /install-ubuntu.sh
+    rm /tmp/urfs/install-ubuntu.sh
+fi # restart_point 3
+echo restart point 3 passed
 
 KERN_VER=`uname -r`
 mkdir -p /tmp/urfs/lib/modules/$KERN_VER/
@@ -313,16 +336,19 @@ mkdir -p /tmp/urfs/etc/chromium-browser
 echo -e 'CHROMIUM_FLAGS="${CHROMIUM_FLAGS} --ppapi-flash-path=/usr/lib/chromium-browser/libpepflashplayer.so"' >> /tmp/urfs/etc/chromium-browser/default
 
 # flash plugin requires a new version of libstdc++6 from test repository
-cat > /tmp/urfs/install-flash.sh <<EOF
+if [ "$restart_point" -le 4 ]; then
+    cat > /tmp/urfs/install-flash.sh <<EOF
 add-apt-repository -y ppa:ubuntu-toolchain-r/test
 apt-get update
 apt-get install -y libstdc++6
 EOF
 
-chmod a+x /tmp/urfs/install-flash.sh
-chroot /tmp/urfs /bin/bash -c /install-flash.sh
-rm /tmp/urfs/install-flash.sh
 
+    chmod a+x /tmp/urfs/install-flash.sh
+    chroot /tmp/urfs /bin/bash -c /install-flash.sh
+    rm /tmp/urfs/install-flash.sh
+fi # restart_point 4
+echo restart point 4 passed
 
 # BIG specific files here
 mkdir -p /tmp/urfs/usr/share/X11/xorg.conf.d
@@ -333,24 +359,26 @@ l4t=Tegra124_Linux_R21.4.0_armhf.tbz2
 # download if needed
 mkdir -p ${rootdir}/dist
 [ -f ${rootdir}/dist/${l4t} ] || wget -P ${l4tdir} http://developer.download.nvidia.com/embedded/L4T/r21_Release_v4.0/${l4t} -O ${rootdir}/dist/${l4t}
-cp ${rootdir}/dist/${l4t} ${l4tdir}/
 
-cd ${l4tdir}
-tar xvpf ${l4t}
-cd Linux_for_Tegra/rootfs/
-tar xvpf ../nv_tegra/nvidia_drivers.tbz2
-tar cf - usr/lib | ( cd /tmp/urfs ; tar xvf -)
+if [ "$restart_point" -le 5 ]; then
+    cp ${rootdir}/dist/${l4t} ${l4tdir}/
 
-# cuda symlinks
-ln -s libcuda.so.1 /tmp/urfs/usr/lib/arm-linux-gnueabihf/libcuda.so
-ln -s tegra/libcuda.so.1 /tmp/urfs/usr/lib/arm-linux-gnueabihf/libcuda.so.1
-ln -s tegra/libcuda.so.1.1 /tmp/urfs/usr/lib/arm-linux-gnueabihf/libcuda.so.1.1
+    cd ${l4tdir}
+    tar xvpf ${l4t}
+    cd Linux_for_Tegra/rootfs/
+    tar xvpf ../nv_tegra/nvidia_drivers.tbz2
+    tar cf - usr/lib | ( cd /tmp/urfs ; tar xvf -)
 
-echo "/usr/lib/arm-linux-gnueabihf/tegra" > /tmp/urfs/etc/ld.so.conf.d/nvidia-tegra.conf
-echo "/usr/lib/arm-linux-gnueabihf/tegra-egl" > /tmp/urfs/usr/lib/arm-linux-gnueabihf/tegra-egl/ld.so.conf
-echo "/usr/lib/arm-linux-gnueabihf/tegra" > /tmp/urfs/usr/lib/arm-linux-gnueabihf/tegra/ld.so.conf
+    # cuda symlinks
+    ln -s libcuda.so.1 /tmp/urfs/usr/lib/arm-linux-gnueabihf/libcuda.so
+    ln -s tegra/libcuda.so.1 /tmp/urfs/usr/lib/arm-linux-gnueabihf/libcuda.so.1
+    ln -s tegra/libcuda.so.1.1 /tmp/urfs/usr/lib/arm-linux-gnueabihf/libcuda.so.1.1
 
-cat >/tmp/urfs/etc/udev/rules.d/99-tegra-lid-switch.rules <<EOF
+    echo "/usr/lib/arm-linux-gnueabihf/tegra" > /tmp/urfs/etc/ld.so.conf.d/nvidia-tegra.conf
+    echo "/usr/lib/arm-linux-gnueabihf/tegra-egl" > /tmp/urfs/usr/lib/arm-linux-gnueabihf/tegra-egl/ld.so.conf
+    echo "/usr/lib/arm-linux-gnueabihf/tegra" > /tmp/urfs/usr/lib/arm-linux-gnueabihf/tegra/ld.so.conf
+
+    cat >/tmp/urfs/etc/udev/rules.d/99-tegra-lid-switch.rules <<EOF
 ACTION=="remove", GOTO="tegra_lid_switch_end"
 
 SUBSYSTEM=="input", KERNEL=="event*", SUBSYSTEMS=="platform", KERNELS=="gpio-keys.4", TAG+="power-switch"
@@ -358,8 +386,8 @@ SUBSYSTEM=="input", KERNEL=="event*", SUBSYSTEMS=="platform", KERNELS=="gpio-key
 LABEL="tegra_lid_switch_end"
 EOF
 
-# nvidia device node permissions
-cat > /tmp/urfs/lib/udev/rules.d/51-nvrm.rules <<EOF
+    # nvidia device node permissions
+    cat > /tmp/urfs/lib/udev/rules.d/51-nvrm.rules <<EOF
 KERNEL=="knvmap", GROUP="video", MODE="0660"
 KERNEL=="nvhdcp1", GROUP="video", MODE="0660"
 KERNEL=="nvhost-as-gpu", GROUP="video", MODE="0660"
@@ -377,8 +405,8 @@ KERNEL=="tegra_dc_1", GROUP="video", MODE="0660"
 KERNEL=="tegra_dc_ctrl", GROUP="video", MODE="0660"
 EOF
 
-# alsa mixer settings to enable internal speakers
-cat > /tmp/urfs/var/lib/alsa/asound.state <<EOF
+    # alsa mixer settings to enable internal speakers
+    cat > /tmp/urfs/var/lib/alsa/asound.state <<EOF
 state.HDATegra {
 	control.1 {
 		iface CARD
@@ -2068,7 +2096,7 @@ state.Venice2 {
 }
 EOF
 
-cat > /tmp/urfs/install-tegra.sh <<EOF
+    cat > /tmp/urfs/install-tegra.sh <<EOF
 update-alternatives --install /etc/ld.so.conf.d/arm-linux-gnueabihf_EGL.conf arm-linux-gnueabihf_egl_conf /usr/lib/arm-linux-gnueabihf/tegra-egl/ld.so.conf 1000
 update-alternatives --install /etc/ld.so.conf.d/arm-linux-gnueabihf_GL.conf arm-linux-gnueabihf_gl_conf /usr/lib/arm-linux-gnueabihf/tegra/ld.so.conf 1000
 ldconfig
@@ -2076,16 +2104,20 @@ adduser user video
 EOF
 #su user -c "xdg-settings set default-web-browser chromium.desktop"
 
-chmod a+x /tmp/urfs/install-tegra.sh
-chroot /tmp/urfs /bin/bash -c /install-tegra.sh
-rm /tmp/urfs/install-tegra.sh
+    chmod a+x /tmp/urfs/install-tegra.sh
+    chroot /tmp/urfs /bin/bash -c /install-tegra.sh
+    rm /tmp/urfs/install-tegra.sh
+fi # restart_point 5
+echo restart point 5 passed
 
 # Install CUDA toolkit, download if needed
 cuda_repo=cuda-repo-l4t-r21.3-6-5-prod_6.5-42_armhf.deb
 [ -f ${rootdir}/dist/$cuda_repo ] || wget http://developer.download.nvidia.com/embedded/L4T/r21_Release_v3.0/$cuda_repo -O ${rootdir}/dist/$cuda_repo
-cp ${rootdir}/dist/$cuda_repo /tmp/urfs/
 
-cat > /tmp/urfs/install-cuda.sh <<EOF
+if [ "$restart_point" -le 6 ]; then
+    cp ${rootdir}/dist/$cuda_repo /tmp/urfs/
+
+    cat > /tmp/urfs/install-cuda.sh <<EOF
 dpkg -i $cuda_repo
 apt-get update
 apt-get install -y cuda-toolkit-6-5
@@ -2097,18 +2129,23 @@ source ~/.bashrc
 sh /usr/local/cuda/bin/cuda-install-samples-6.5.sh /home/user
 EOF
 
-chmod a+x /tmp/urfs/install-cuda.sh
-chroot /tmp/urfs /bin/bash -c /install-cuda.sh
-rm /tmp/urfs/install-cuda.sh
+    chmod a+x /tmp/urfs/install-cuda.sh
+    chroot /tmp/urfs /bin/bash -c /install-cuda.sh
+    rm /tmp/urfs/install-cuda.sh
+fi # restart_point 6
+echo restart point 6 passed
 
 # Install extra software
-cat > /tmp/urfs/install-extra.sh <<EOF
+if [ "$restart_point" -le 7 ]; then
+    cat > /tmp/urfs/install-extra.sh <<EOF
 apt-get install -y mc ntp git
 EOF
 
-chmod a+x /tmp/urfs/install-extra.sh
-chroot /tmp/urfs /bin/bash -c /install-extra.sh
-rm /tmp/urfs/install-extra.sh
+    chmod a+x /tmp/urfs/install-extra.sh
+    chroot /tmp/urfs /bin/bash -c /install-extra.sh
+    rm /tmp/urfs/install-extra.sh
+fi # restart_point 7
+echo restart point 7 passed
 
 # Intall autoamtic NTP for time service
 
