@@ -149,21 +149,21 @@ then
   ubuntu_arch="amd64"
   if [ "$ubuntu_metapackage" = "default" ]
   then
-    ubuntu_metapackage="ubuntu-desktop"
+    ubuntu_metapackage="ubuntu-mate-desktop "
   fi
 elif [ "$chromebook_arch" = "i686" ]
 then
   ubuntu_arch="i386"
   if [ "$ubuntu_metapackage" = "default" ]
   then
-    ubuntu_metapackage="ubuntu-desktop"
+    ubuntu_metapackage="ubuntu-mate-desktop"
   fi
 elif [ "$chromebook_arch" = "armv7l" ]
 then
   ubuntu_arch="armhf"
   if [ "$ubuntu_metapackage" = "default" ]
   then
-    ubuntu_metapackage="ubuntu-desktop"
+    ubuntu_metapackage="ubuntu-mate-desktop"
   fi
 else
   echo -e "Error: This script doesn't know how to install ChrUbuntu on $chromebook_arch"
@@ -268,6 +268,8 @@ echo -e "\n127.0.1.1       chrubuntu" >> /tmp/urfs/etc/hosts
 
 cr_install="wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
 add-apt-repository \"deb http://dl.google.com/linux/chrome/deb/ stable main\"
+apt-add-repository ppa:ubuntu-mate-dev/ppa
+apt-add-repository ppa:ubuntu-mate-dev/trusty-mate
 apt-get update
 apt-get -y install google-chrome-stable"
 
