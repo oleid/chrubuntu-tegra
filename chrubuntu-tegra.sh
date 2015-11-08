@@ -372,9 +372,9 @@ if [ "$restart_point" -le 5 ]; then
     tar cf - usr/lib | ( cd /tmp/urfs ; tar xvf -)
 
     # cuda symlinks
-    ln -s libcuda.so.1 /tmp/urfs/usr/lib/arm-linux-gnueabihf/libcuda.so
-    ln -s tegra/libcuda.so.1 /tmp/urfs/usr/lib/arm-linux-gnueabihf/libcuda.so.1
-    ln -s tegra/libcuda.so.1.1 /tmp/urfs/usr/lib/arm-linux-gnueabihf/libcuda.so.1.1
+    ln -sf libcuda.so.1 /tmp/urfs/usr/lib/arm-linux-gnueabihf/libcuda.so
+    ln -sf tegra/libcuda.so.1 /tmp/urfs/usr/lib/arm-linux-gnueabihf/libcuda.so.1
+    ln -sf tegra/libcuda.so.1.1 /tmp/urfs/usr/lib/arm-linux-gnueabihf/libcuda.so.1.1
 
     echo "/usr/lib/arm-linux-gnueabihf/tegra" > /tmp/urfs/etc/ld.so.conf.d/nvidia-tegra.conf
     echo "/usr/lib/arm-linux-gnueabihf/tegra-egl" > /tmp/urfs/usr/lib/arm-linux-gnueabihf/tegra-egl/ld.so.conf
